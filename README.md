@@ -8,6 +8,10 @@ Email spoofing is the way of delivering forged emails to recipients.These method
 
 
 Python Dependencies
+
 smtplib
 
 sys
+
+#usage 
+sudo python3 smtprelay.py 
