@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
+
 import smtplib
 import sys
+
+# Banner
 print('''
    ____                         ____         __                 ______ __                 __      
   / __ \ ____   ___   ____     / __ \ ___   / /____ _ __  __   / ____// /_   ___   _____ / /__    
@@ -16,29 +19,43 @@ print('''
  / /___ / / / / / // /_/ // // /   ___/ // /_/ // /_/ // /_/ // __// // / / // /_/ /              
 /_____//_/ /_/ /_/ \__,_//_//_/   /____// .___/ \____/ \____//_/  /_//_/ /_/ \__, /               
                                        /_/                                  /____/ 
-Beware ! Publicly available email servers can be used for spoofing attack.If you have configured your mail server with OPEN RELAY, this dangerous email spoofing attack can be performed.
+Beware ! Publicly available email servers can be used for spoofing attack.
+Ensure your mail server is not configured with OPEN RELAY to prevent email spoofing.
 ''')
 
-def prompt(prompt): 
-     return input(prompt).strip()
-fromaddr = prompt("From address victim 1: ")
-toaddrs  = prompt("To address victim 2: ").split()
-server   = prompt("mailserver: ")
-print ("Enter the message and Type ^D (Unix) or ^C (Windows) to send:")
-
-# Add the From: and To: headers at the start!
-msg = ("From: %s\r\nTo: %s\r\n\r\n"
-       % (fromaddr, ", ".join(toaddrs)))
-while 1:
+# Function to prompt user input
+def prompt(prompt_text):
     try:
+        return input(prompt_text).strip()
+    except KeyboardInterrupt:
+        print("\n[!] Process interrupted by user.")
+        sys.exit(1)
+
+# Collect user inputs
+fromaddr = prompt("From address (e.g., attacker@example.com): ")
+toaddrs = prompt("To address (e.g., victim@example.com): ").split(',')
+server_address = prompt("Mail server (e.g., smtp.example.com): ")
+
+print("\nEnter the message. Press Ctrl+D (Unix) or Ctrl+Z (Windows) then Enter to send:\n")
+
+# Compose the email
+msg = f"From: {fromaddr}\r\nTo: {', '.join(toaddrs)}\r\n\r\n"
+try:
+    while True:
         line = input()
-    except EOFError:
-        break
-    if not line:
-        break
-    msg = msg + line
-print ("your message is in the way" + repr(len("msg")))
-server = smtplib.SMTP(server)
-server.set_debuglevel(0)
-server.sendmail(fromaddr, toaddrs, msg)
-server.quit()
+        msg += line + '\n'
+except EOFError:
+    pass
+
+print(f"\n[+] Your message is ready to be sent ({len(msg)} bytes).")
+
+# Send the email
+try:
+    with smtplib.SMTP(server_address) as server:
+        server.set_debuglevel(1)  # Optional: Set to 1 for verbose output, 0 to disable
+        server.sendmail(fromaddr, toaddrs, msg)
+        print("[+] Message sent successfully!")
+except smtplib.SMTPException as e:
+    print(f"[!] Failed to send email: {e}")
+except Exception as e:
+    print(f"[!] An unexpected error occurred: {e}")
